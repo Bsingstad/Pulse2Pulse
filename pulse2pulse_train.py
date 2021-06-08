@@ -80,7 +80,8 @@ print(opt)
 #==========================================
 # Device handling
 #==========================================
-torch.cuda.set_device(opt.device_id)
+#torch.cuda.set_device(opt.device_id)
+useCuda = False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 print("device=", device)
@@ -210,7 +211,7 @@ def train(netG, netD, optimizerG, optimizerD, dataloader):
             # c) compute gradient penalty and backprop
             gradient_penalty = calc_gradient_penalty(netD, real_ecgs,
                                                     fake.data, b_size, opt.lmbda,
-                                                    use_cuda=True)
+                                                    use_cuda=useCuda)
             gradient_penalty.backward(one)
 
             # Compute cost * Wassertein loss..
@@ -271,8 +272,10 @@ def train(netG, netD, optimizerG, optimizerD, dataloader):
         
         D_cost_train_epoch_avg = sum(D_cost_train_epoch) / float(len(D_cost_train_epoch))
         D_wass_train_epoch_avg = sum(D_wass_train_epoch) / float(len(D_wass_train_epoch))
-        G_cost_epoch_avg = sum(G_cost_epoch) / float(len(G_cost_epoch))
-
+        try:
+            G_cost_epoch_avg = sum(G_cost_epoch) / float(len(G_cost_epoch))
+        except:
+            G_cost_epoch_avg = 0.0001
         
         writer.add_scalar("D_cost_train_epoch_avg",D_cost_train_epoch_avg ,epoch)
         writer.add_scalar("D_wass_train_epoch_avg",D_wass_train_epoch_avg ,epoch)
@@ -296,7 +299,7 @@ def train(netG, netD, optimizerG, optimizerD, dataloader):
 # Save models
 #=====================================
 def save_model(netG, netD, optimizerG, optimizerD,  epoch):
-   
+    py_file_name = "save_mod"
     check_point_name = py_file_name + "_epoch:{}.pt".format(epoch) # get code file name and make a name
     check_point_path = os.path.join(checkpoint_dir, check_point_name)
     # save torch model
